@@ -141,4 +141,4 @@ jobs:
       - name: Smoke test HTTP
         run: |
           sleep 10
-          curl http://localhost:3000/api/tasks
+          curl http://localhost:3000/api/docs

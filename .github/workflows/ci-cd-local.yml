@@ -1,0 +1,39 @@
+name: CI-CD Local
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  tests:
+    name: Installation et tests
+    runs-on: ubuntu-latest
+
+  mysql:
+    image: mysql:lts
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todolist_db
+    ports:
+      - "3306:3306"
+
+
+
+
+    steps:
+     
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+   
+      - name: Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installation des dépendances npm
+        run: npm install

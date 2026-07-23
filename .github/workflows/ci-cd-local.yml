@@ -8,7 +8,9 @@ on:
     branches:
       - main
 
+
 jobs:
+
   tests:
     name: Installation et tests
     runs-on: ubuntu-latest
@@ -27,11 +29,13 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
+
     steps:
 
       # Récupération du code
       - name: Checkout du code
         uses: actions/checkout@v4
+
 
       # Installation Node.js
       - name: Installation de Node.js
@@ -39,9 +43,11 @@ jobs:
         with:
           node-version: 20
 
+
       # Installation dépendances
       - name: Installation des dépendances npm
         run: npm ci
+
 
       # Attente MySQL
       - name: Wait for MySQL
@@ -57,10 +63,82 @@ jobs:
           echo "MySQL did not become ready in time"
           exit 1
 
+
+      # Variables environnement DB
+      - name: Configuration variables DB
+        run: |
+          echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "DB_USER=root" >> $GITHUB_ENV
+          echo "DB_PASSWORD=root" >> $GITHUB_ENV
+          echo "DB_NAME=todolist_db" >> $GITHUB_ENV
+          echo "DB_DIALECT=mysql" >> $GITHUB_ENV
+
+
+      # Correction permission Jest
       - name: Correction permissions Jest
         run: |
           chmod +x node_modules/.bin/jest
-          ls -la node_modules/.bin/jest
 
+
+      # Tests unitaires + intégration
       - name: Lancer les tests
         run: npx jest --runInBand
+
+
+
+
+  deploy:
+    name: Build Docker + Deploy local + Smoke test
+    runs-on: ubuntu-latest
+    needs: tests
+
+
+    steps:
+
+      # Récupération du code
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+
+      # Construction image Docker
+      - name: Build image Docker
+        run: |
+          docker build -t todolist-backend .
+
+
+      # Lancer MySQL
+      - name: Lancer MySQL
+        run: |
+          docker run -d \
+          --name mysql_db \
+          -e MYSQL_ROOT_PASSWORD=root \
+          -e MYSQL_DATABASE=todolist_db \
+          -p 3306:3306 \
+          mysql:lts
+
+
+      # Attendre MySQL
+      - name: Wait MySQL
+        run: |
+          sleep 20
+
+
+      # Déploiement backend dans le runner
+      - name: Run Docker container
+        run: |
+          docker run -d \
+          --name backend_container \
+          --network host \
+          -e DB_HOST=127.0.0.1 \
+          -e DB_USER=root \
+          -e DB_PASSWORD=root \
+          -e DB_NAME=todolist_db \
+          -e DB_DIALECT=mysql \
+          todolist-backend
+
+
+      # Smoke test HTTP
+      - name: Smoke test HTTP
+        run: |
+          sleep 10
+          curl http://localhost:3000/api/tasks

@@ -39,9 +39,11 @@ jobs:
         with:
           node-version: 20
 
-          - name: Installation des dépendances npm
+      # Installation dépendances
+      - name: Installation des dépendances npm
         run: npm ci
 
+      # Attente MySQL
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do
@@ -52,19 +54,13 @@ jobs:
             echo "Waiting MySQL..."
             sleep 2
           done
+          echo "MySQL did not become ready in time"
           exit 1
-
-      - name: Variables DB
-        run: |
-          echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
-          echo "DB_USER=root" >> $GITHUB_ENV
-          echo "DB_PASSWORD=root" >> $GITHUB_ENV
-          echo "DB_NAME=todolist_db" >> $GITHUB_ENV
-          echo "DB_DIALECT=mysql" >> $GITHUB_ENV
 
       - name: Correction permissions Jest
         run: |
           chmod +x node_modules/.bin/jest
+          ls -la node_modules/.bin/jest
 
       - name: Lancer les tests
         run: npx jest --runInBand

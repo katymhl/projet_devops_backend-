@@ -25,3 +25,18 @@ services:
       DB_PASSWORD: root
       DB_NAME: todolist_db
       DB_DIALECT: mysql
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime_kuma
+    restart: always
+    depends_on:
+      - backend
+      - mysql
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma:/app/data
+
+volumes:
+  uptime-kuma:
